@@ -1,33 +1,45 @@
-name: Publish Packages
+name: Pre release
+
 on:
-  workflow_dispatch:
-  release:
-    types: [ created ]
   push:
-    tags:
-      - '*'
+    branches:
+      - master
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+  build:
+    name: Gradle-Build
+    runs-on: ubuntu-20.04
     steps:
-
-      - name: Checkout latest code
+      - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
+      
+      # Setup JDK
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
           java-version: 17
-
-      - name: Change wrapper permissions
+          distribution: 'zulu'
+          cache: 'gradle'
+        
+      # Build
+      - name: Make gradlew executable
         run: chmod +x ./gradlew
-
-      - name: Publish package
-        uses: gradle/gradle-build-action@v2
+      - name: Build with Gradle
+        run: ./gradlew build
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
         with:
-          arguments: publish
-        env:
-          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          name: Artifact
+          path: |
+            bin/EcoBosses v*.jar
+            LICENSE
+#       # Auto release
+#       - name: Auto release
+#         uses: "marvinpinto/action-automatic-releases@latest"
+#         with:
+#           repo_token: "${{ secrets.GITHUB_TOKEN }}"
+#           automatic_release_tag: latest
+#           prerelease: true
+#           files: |
+#             bin/EcoEnchants v*.jar
+#             LICENSE
